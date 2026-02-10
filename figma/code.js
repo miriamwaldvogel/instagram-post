@@ -78,14 +78,19 @@ figma.ui.onmessage = async (msg) => {
 
 async function loadTemplateConfigs() {
   try {
-    const response = await fetch('https://miriamwaldvogel.github.io/instagram-post/templates.json');
+    const apiUrl = (await figma.clientStorage.getAsync(STORAGE_KEYS.apiUrl) || '').trim().replace(/\/$/, '');
+    const url = apiUrl ? `${apiUrl}/api/templates` : '';
+    if (!url) {
+      throw new Error('API URL not set. Set your app URL in the plugin settings.');
+    }
+    const response = await fetch(url);
     if (!response.ok) {
-      throw new Error('Failed to load templates.json');
+      throw new Error('Failed to load templates');
     }
     TEMPLATE_CONFIGS = await response.json();
     console.log('Loaded template configs:', TEMPLATE_CONFIGS);
   } catch (error) {
-    console.error('Error loading templates.json:', error);
+    console.error('Error loading templates:', error);
     // Fallback to hardcoded values if network fails
     TEMPLATE_CONFIGS = {
       "Two chunk quote": { maxFont: 75, nameFont: 60, positionFont: 50 },

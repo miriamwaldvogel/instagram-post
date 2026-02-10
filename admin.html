@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrincePost – Template admin</title>
+  <link rel="icon" href="favicon.png" type="image/x-icon">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #eee; padding: 24px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 24px; }
+    .card { background: #16213e; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 12px; color: #a0aec0; }
+    input[type="password"], input[type="file"], textarea, button { font: inherit; }
+    input[type="password"] { width: 100%; max-width: 280px; padding: 10px 12px; border: 1px solid #2d3748; border-radius: 6px; background: #0f0f1a; color: #eee; margin-bottom: 12px; }
+    button { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; background: #4299e1; color: #fff; }
+    button:hover { background: #3182ce; }
+    button.danger { background: #e53e3e; }
+    button.danger:hover { background: #c53030; }
+    button.secondary { background: #4a5568; }
+    button.secondary:hover { background: #2d3748; }
+    textarea { width: 100%; min-height: 280px; padding: 12px; border: 1px solid #2d3748; border-radius: 6px; background: #0f0f1a; color: #e2e8f0; font-size: 13px; resize: vertical; }
+    .login-wrap { max-width: 320px; }
+    .msg { margin-top: 12px; padding: 10px; border-radius: 6px; font-size: 14px; }
+    .msg.error { background: #442727; color: #feb2b2; }
+    .msg.success { background: #276749; color: #9ae6b4; }
+    .thumb-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .thumb-item { background: #0f0f1a; border-radius: 8px; padding: 12px; text-align: center; }
+    .thumb-item img { width: 100%; height: auto; border-radius: 4px; background: #2d3748; min-height: 80px; object-fit: contain; }
+    .thumb-item .name { font-size: 12px; margin-top: 8px; word-break: break-word; color: #a0aec0; }
+    .thumb-item .actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .thumb-item .actions button { padding: 6px 10px; font-size: 12px; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loginView" class="card login-wrap">
+      <h1>Template admin</h1>
+      <h2>Log in</h2>
+      <form id="loginForm">
+        <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+        <button type="submit">Log in</button>
+      </form>
+      <div id="loginMsg" class="msg hidden"></div>
+    </div>
+
+    <div id="dashboardView" class="hidden">
+      <div class="header-row">
+        <h1>Template admin</h1>
+        <button type="button" id="logoutBtn" class="secondary">Log out</button>
+      </div>
+
+      <div class="card">
+        <h2>Templates (templates.json)</h2>
+        <p style="margin-bottom:10px;font-size:14px;color:#a0aec0;">Edit the JSON below and save. Each key is a template name; values must include <code>type</code> (cover or slide) and <code>section</code>.</p>
+        <textarea id="templatesJson" spellcheck="false"></textarea>
+        <div style="margin-top:10px;">
+          <button type="button" id="saveTemplatesBtn">Save templates</button>
+          <span id="templatesMsg" class="msg hidden" style="margin-left:12px;"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Cover thumbnails</h2>
+        <p style="margin-bottom:12px;font-size:14px;color:#a0aec0;">Replace or delete PNG thumbnails for cover templates.</p>
+        <div id="coverThumbList" class="thumb-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Slide thumbnails</h2>
+        <p style="margin-bottom:12px;font-size:14px;color:#a0aec0;">Replace or delete PNG thumbnails for slide templates.</p>
+        <div id="slideThumbList" class="thumb-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const loginView = document.getElementById('loginView');
+    const dashboardView = document.getElementById('dashboardView');
+    const loginForm = document.getElementById('loginForm');
+    const loginMsg = document.getElementById('loginMsg');
+    const passwordInput = document.getElementById('password');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const templatesJson = document.getElementById('templatesJson');
+    const saveTemplatesBtn = document.getElementById('saveTemplatesBtn');
+    const templatesMsg = document.getElementById('templatesMsg');
+    const coverThumbList = document.getElementById('coverThumbList');
+    const slideThumbList = document.getElementById('slideThumbList');
+
+    function showMsg(el, text, isError) {
+      el.textContent = text;
+      el.className = 'msg ' + (isError ? 'error' : 'success');
+      el.classList.remove('hidden');
+    }
+    function hideMsg(el) {
+      el.classList.add('hidden');
+    }
+
+    async function checkSession() {
+      const r = await fetch('/api/auth/session', { credentials: 'include' });
+      if (r.ok) {
+        loginView.classList.add('hidden');
+        dashboardView.classList.remove('hidden');
+        loadTemplates();
+        return true;
+      }
+      loginView.classList.remove('hidden');
+      dashboardView.classList.add('hidden');
+      return false;
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMsg(loginMsg);
+      const password = passwordInput.value.trim();
+      if (!password) {
+        showMsg(loginMsg, 'Enter password', true);
+        return;
+      }
+      const r = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password }),
+      });
+      const data = r.ok ? await r.json().catch(() => ({})) : { error: (await r.json().catch(() => ({}))).error || 'Login failed' };
+      if (r.ok && data.ok) {
+        await checkSession();
+      } else {
+        showMsg(loginMsg, data.error || 'Invalid password', true);
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await checkSession();
+    });
+
+    async function loadTemplates() {
+      const r = await fetch('/api/templates', { credentials: 'include' });
+      if (!r.ok) {
+        templatesJson.value = '{}';
+        return;
+      }
+      const data = await r.json();
+      templatesJson.value = JSON.stringify(data, null, 2);
+      renderThumbLists(data);
+    }
+
+    function renderThumbLists(templates) {
+      const covers = [];
+      const slides = [];
+      if (templates && typeof templates === 'object') {
+        Object.entries(templates).forEach(([name, cfg]) => {
+          if (cfg && cfg.type === 'cover') covers.push(name);
+          if (cfg && cfg.type === 'slide') slides.push(name);
+        });
+      }
+      coverThumbList.innerHTML = covers.map((name) => thumbItemHtml('cover', name)).join('');
+      slideThumbList.innerHTML = slides.map((name) => thumbItemHtml('slide', name)).join('');
+      coverThumbList.querySelectorAll('button[data-action="replace"]').forEach((btn) => {
+        btn.addEventListener('click', () => replaceThumb('cover', btn.dataset.name));
+      });
+      coverThumbList.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
+        btn.addEventListener('click', () => deleteThumb('cover', btn.dataset.name));
+      });
+      slideThumbList.querySelectorAll('button[data-action="replace"]').forEach((btn) => {
+        btn.addEventListener('click', () => replaceThumb('slide', btn.dataset.name));
+      });
+      slideThumbList.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
+        btn.addEventListener('click', () => deleteThumb('slide', btn.dataset.name));
+      });
+    }
+
+    function thumbItemHtml(type, name) {
+      const url = `/api/thumbnails/${type}/${encodeURIComponent(name)}`;
+      return `
+        <div class="thumb-item" data-name="${escapeHtml(name)}">
+          <img src="${url}" alt="${escapeHtml(name)}" loading="lazy" onerror="this.src='';this.alt='No image';" />
+          <div class="name">${escapeHtml(name)}</div>
+          <div class="actions">
+            <button type="button" data-action="replace" data-name="${escapeHtml(name)}">Replace</button>
+            <button type="button" data-action="delete" data-name="${escapeHtml(name)}" class="danger">Delete</button>
+          </div>
+        </div>
+      `;
+    }
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function replaceThumb(type, name) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/png,.png';
+      input.onchange = async () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const base64 = await fileToBase64(file);
+        const url = `/api/thumbnails/${type}/${encodeURIComponent(name)}`;
+        const r = await fetch(url, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: base64 }),
+        });
+        if (r.ok) {
+          const img = document.querySelector(`.thumb-item[data-name="${escapeHtml(name)}"] img`);
+          if (img) img.src = url + '?t=' + Date.now();
+        } else {
+          const err = (await r.json().catch(() => ({}))).error || 'Upload failed';
+          alert(err);
+        }
+      };
+      input.click();
+    }
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => {
+          const dataUrl = fr.result;
+          const base64 = dataUrl.replace(/^data:[^;]+;base64,/, '');
+          resolve(base64);
+        };
+        fr.onerror = reject;
+        fr.readAsDataURL(file);
+      });
+    }
+
+    async function deleteThumb(type, name) {
+      if (!confirm(`Delete thumbnail for "${name}"?`)) return;
+      const url = `/api/thumbnails/${type}/${encodeURIComponent(name)}`;
+      const r = await fetch(url, { method: 'DELETE', credentials: 'include' });
+      if (r.ok) {
+        const item = document.querySelector(`.thumb-item[data-name="${escapeHtml(name)}"]`);
+        if (item) item.remove();
+      } else {
+        const err = (await r.json().catch(() => ({}))).error || 'Delete failed';
+        alert(err);
+      }
+    }
+
+    saveTemplatesBtn.addEventListener('click', async () => {
+      hideMsg(templatesMsg);
+      let data;
+      try {
+        data = JSON.parse(templatesJson.value);
+      } catch (e) {
+        showMsg(templatesMsg, 'Invalid JSON: ' + e.message, true);
+        return;
+      }
+      if (typeof data !== 'object' || data === null) {
+        showMsg(templatesMsg, 'JSON must be an object', true);
+        return;
+      }
+      const r = await fetch('/api/templates', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (r.ok) {
+        showMsg(templatesMsg, 'Saved.', false);
+        renderThumbLists(data);
+        setTimeout(() => hideMsg(templatesMsg), 3000);
+      } else {
+        const err = (await r.json().catch(() => ({}))).error || 'Save failed';
+        showMsg(templatesMsg, err, true);
+      }
+    });
+
+    checkSession();
+  </script>
+</body>
+</html>

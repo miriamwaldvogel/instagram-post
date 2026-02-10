@@ -725,8 +725,8 @@ let coverTemplates = []; // [{ name, section }]
 //   "One chunk quote": { "type":"slide", "section":"all", ... }
 // }
 async function loadTemplates() {
-  const res = await fetch('templates.json');
-  if (!res.ok) throw new Error('Failed to load templates.json');
+  const res = await fetch('/api/templates');
+  if (!res.ok) throw new Error('Failed to load templates');
 
   TEMPLATE_CONFIGS = await res.json();
 
@@ -925,9 +925,7 @@ function hasBackgroundImage(templateName) {
 let addSlideTemplate = "One chunk quote"; // default; will be validated on render
 
 function slideThumbPath(templateName) {
-  // Folder: slide-thumbnails
-  // Filename: e.g., "One chunk quote.png"
-  return encodeURI(`slide-thumbnails/${templateName}.png`);
+  return `/api/thumbnails/slide/${encodeURIComponent(templateName)}`;
 }
 
 function renderAddSlideTemplateUI() {
@@ -1282,9 +1280,7 @@ function handleKeydown(event, slideId, chunkIndex) {
 
     // --- Cover thumbnail grid ---
     function coverThumbPath(templateName) {
-      // Folder: cover-thumbnails
-      // Filenames: e.g., "Opinion cover 1.png"
-      return encodeURI(`cover-thumbnails/${templateName}.png`);
+      return `/api/thumbnails/cover/${encodeURIComponent(templateName)}`;
     }
 
     function renderCoverThumbGrid() {
@@ -1394,7 +1390,7 @@ function handleKeydown(event, slideId, chunkIndex) {
     console.error(err);
     // Optional: show a non-popup fallback message in the cover hint area
     const hint = document.getElementById('coverThumbHint');
-    if (hint) hint.textContent = 'Error: could not load templates.json. Check server + file path.';
+    if (hint) hint.textContent = 'Error: could not load templates. Check server and /api/templates.';
   }
 })();
 

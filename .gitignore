@@ -5,3 +5,4 @@ slide-thumbnails/originals/
 cover-thumbnails/originals/
 cover-thumbnails/originals/
 .vercel
+.env*.local

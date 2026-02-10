@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/json-generation-updated.html" }
+    { "source": "/", "destination": "/json-generation-updated.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/api/thumbnails/cover/:name", "destination": "/api/thumbnails?type=cover&name=:name" },
+    { "source": "/api/thumbnails/slide/:name", "destination": "/api/thumbnails?type=slide&name=:name" }
   ]
 }
