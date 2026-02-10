@@ -687,8 +687,9 @@
           <small style="display: block; margin-top: 4px; color: #666; font-size: 12px;">Use the same name in the Figma plugin so only your posts load there.</small>
         </div>
         <div class="form-group" style="margin-bottom: 12px;">
-          <label for="apiBaseUrl">API URL (leave blank if this page is on the same site as the API)</label>
-          <input type="text" id="apiBaseUrl" placeholder="https://your-app.vercel.app" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+          <label for="apiBaseUrl">API URL (for this web app only)</label>
+          <input type="text" id="apiBaseUrl" placeholder="Leave blank when using this page on Vercel" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+          <small style="display: block; margin-top: 4px; color: #666; font-size: 12px;">Leave blank if you opened this page from your Vercel app (e.g. instagram-post-mu.vercel.app). The “Send to Figma” button will then use the same site’s API. Only fill this in if the page is hosted elsewhere (e.g. GitHub Pages) and your API is on Vercel.</small>
         </div>
         <div class="button-group" style="margin-bottom: 15px;">
           <button class="btn-success" onclick="sendToFigma()">Send to Figma</button>
@@ -1236,16 +1237,20 @@ function handleKeydown(event, slideId, chunkIndex) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ workspace, json }),
         });
-        const data = await res.json().catch(() => ({}));
+        const contentType = (res.headers.get('Content-Type') || '').toLowerCase();
+        const isJson = contentType.indexOf('application/json') !== -1;
+        const data = isJson ? (await res.json().catch(function () { return {}; })) : {};
         if (!res.ok) {
-          showNotification(data.error || `Error ${res.status}`, 'error');
+          const errMsg = data.error || (res.status === 404 ? 'API not found. Is the URL correct?' : res.status === 502 ? 'Server error. Check Vercel logs.' : 'Error ' + res.status);
+          showNotification(errMsg, 'error');
           return;
         }
         showNotification('Sent to Figma! Open Figma and click “Get from web” in the plugin.');
         try { localStorage.setItem(WORKSPACE_STORAGE_KEY, workspace); } catch (_) {}
         try { localStorage.setItem(API_BASE_STORAGE_KEY, base); } catch (_) {}
       } catch (e) {
-        showNotification('Network error. Check API URL and connection.', 'error');
+        const msg = (e && e.message) ? e.message : 'Network error';
+        showNotification('Request failed: ' + msg + (base ? '' : ' (try setting API URL to your Vercel URL)'), 'error');
       }
     }
 
