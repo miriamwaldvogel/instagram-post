@@ -38,6 +38,12 @@
     .thumb-item .actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
     .thumb-item .actions button { padding: 6px 10px; font-size: 12px; }
     .header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+    .back-to-princepost-container { margin-bottom: 20px; }
+    .back-to-princepost-container a { display: inline-block; padding: 10px 16px; border-radius: 6px; background: #4a5568; color: #fff; text-decoration: none; font-size: 14px; }
+    .back-to-princepost-container a:hover { background: #2d3748; }
+    .radio-group { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+    .radio-group label.radio-label { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; cursor: pointer; font-weight: normal; }
+    .radio-group input[type="radio"] { width: auto; margin: 0; }
     .hidden { display: none; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -71,7 +77,9 @@
         <h1>Template admin</h1>
         <button type="button" id="logoutBtn" class="secondary">Log out</button>
       </div>
-
+      <div class="back-to-princepost-container">
+        <a href="/" target="_blank">Back to PrincePost</a>
+      </div>
       <!-- Add template form (add_template.py logic) -->
       <div class="card">
         <h2>Add template</h2>
@@ -81,22 +89,18 @@
             <input type="text" id="addName" required placeholder="e.g. Opinion cover 1" />
           </div>
           <div class="form-row">
-            <label for="addType">Type</label>
-            <select id="addType">
-              <option value="slide">Slide</option>
-              <option value="cover">Cover</option>
-            </select>
+            <label>Type</label>
+            <div class="radio-group">
+              <label class="radio-label"><input type="radio" name="addType" value="slide" checked /> Slide</label>
+              <label class="radio-label"><input type="radio" name="addType" value="cover" /> Cover</label>
+            </div>
           </div>
           <div class="form-block cover-only" id="addSectionBlock">
-            <label for="addSection">Section (covers only)</label>
-            <select id="addSection">
-              <option value="opinion">opinion</option>
-              <option value="news">news</option>
-              <option value="features">features</option>
-              <option value="sports">sports</option>
-              <option value="prospect">prospect</option>
-              <option value="all">all</option>
-            </select>
+            <label>Section (covers only)</label>
+            <div class="radio-group">
+              <label class="radio-label"><input type="radio" name="addSection" value="opinion" checked /> opinion</label>
+              <label class="radio-label"><input type="radio" name="addSection" value="all" /> all</label>
+            </div>
           </div>
           <div class="form-block slide-only" id="addStructureBlock">
             <label for="addStructure">Structure (comma-separated layer names, slides only)</label>
@@ -136,22 +140,22 @@
               <input type="text" id="editNameDisplay" disabled />
             </div>
             <div class="form-row">
-              <label for="editType">Type</label>
-              <select id="editType">
-                <option value="slide">Slide</option>
-                <option value="cover">Cover</option>
-              </select>
+              <label>Type</label>
+              <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="editType" value="slide" /> Slide</label>
+                <label class="radio-label"><input type="radio" name="editType" value="cover" /> Cover</label>
+              </div>
             </div>
             <div class="form-block cover-only" id="editSectionBlock">
-              <label for="editSection">Section</label>
-              <select id="editSection">
-                <option value="opinion">opinion</option>
-                <option value="news">news</option>
-                <option value="features">features</option>
-                <option value="sports">sports</option>
-                <option value="prospect">prospect</option>
-                <option value="all">all</option>
-              </select>
+              <label>Section</label>
+              <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="editSection" value="opinion" /> opinion</label>
+                <label class="radio-label"><input type="radio" name="editSection" value="news" /> news</label>
+                <label class="radio-label"><input type="radio" name="editSection" value="features" /> features</label>
+                <label class="radio-label"><input type="radio" name="editSection" value="sports" /> sports</label>
+                <label class="radio-label"><input type="radio" name="editSection" value="prospect" /> prospect</label>
+                <label class="radio-label"><input type="radio" name="editSection" value="all" /> all</label>
+              </div>
             </div>
             <div class="form-block slide-only" id="editStructureBlock">
               <label for="editStructure">Structure (comma-separated)</label>
@@ -169,9 +173,6 @@
               <input type="checkbox" id="editBackgroundImage" />
               <label for="editBackgroundImage" class="inline">Background image</label>
             </div>
-            <div class="form-row">
-              <button type="button" id="editReplaceThumbBtn" class="secondary">Replace thumbnail</button>
-            </div>
             <div class="form-actions">
               <button type="button" id="editModalCancel" class="secondary">Cancel</button>
               <button type="submit">Save</button>
@@ -183,13 +184,13 @@
 
       <div class="card">
         <h2>Cover templates</h2>
-        <p style="margin-bottom:12px;font-size:14px;color:#a0aec0;">Click a thumbnail to edit, or use Replace / Delete.</p>
+        <p style="margin-bottom:12px;font-size:14px;color:#a0aec0;">Click a thumbnail to edit, or use Delete to remove the image.</p>
         <div id="coverThumbList" class="thumb-list"></div>
       </div>
 
       <div class="card">
         <h2>Slide templates</h2>
-        <p style="margin-bottom:12px;font-size:14px;color:#a0aec0;">Click a thumbnail to edit, or use Replace / Delete.</p>
+        <p style="margin-bottom:12px;font-size:14px;color:#a0aec0;">Click a thumbnail to edit, or use Delete to remove the image.</p>
         <div id="slideThumbList" class="thumb-list"></div>
       </div>
 
@@ -224,7 +225,6 @@
     const editTemplateForm = document.getElementById('editTemplateForm');
     const editFormMsg = document.getElementById('editFormMsg');
     const editModalCancel = document.getElementById('editModalCancel');
-    const editReplaceThumbBtn = document.getElementById('editReplaceThumbBtn');
 
     let currentTemplates = {};
 
@@ -240,17 +240,17 @@
     }
 
     function toggleAddFormBlocks() {
-      const type = document.getElementById('addType').value;
+      const type = document.querySelector('input[name="addType"]:checked')?.value || 'slide';
       document.getElementById('addSectionBlock').classList.toggle('visible', type === 'cover');
       document.getElementById('addStructureBlock').classList.toggle('visible', type === 'slide');
     }
     function toggleEditFormBlocks() {
-      const type = document.getElementById('editType').value;
+      const type = document.querySelector('input[name="editType"]:checked')?.value || 'slide';
       document.getElementById('editSectionBlock').classList.toggle('visible', type === 'cover');
       document.getElementById('editStructureBlock').classList.toggle('visible', type === 'slide');
     }
-    document.getElementById('addType').addEventListener('change', toggleAddFormBlocks);
-    document.getElementById('editType').addEventListener('change', toggleEditFormBlocks);
+    document.querySelectorAll('input[name="addType"]').forEach((el) => el.addEventListener('change', toggleAddFormBlocks));
+    document.querySelectorAll('input[name="editType"]').forEach((el) => el.addEventListener('change', toggleEditFormBlocks));
 
     async function checkSession() {
       const r = await fetch('/api/auth/session', { credentials: 'include' });
@@ -308,8 +308,8 @@
     }
 
     function buildEntryFromForm(prefix) {
-      const type = document.getElementById(prefix + 'Type').value;
-      const section = type === 'cover' ? document.getElementById(prefix + 'Section').value : 'all';
+      const type = document.querySelector(`input[name="${prefix}Type"]:checked`)?.value || 'slide';
+      const section = type === 'cover' ? (document.querySelector(`input[name="${prefix}Section"]:checked`)?.value || 'opinion') : 'all';
       const structureStr = document.getElementById(prefix + 'Structure').value.trim();
       const structure = structureStr ? structureStr.split(',').map((s) => s.trim()).filter(Boolean) : ['Quote 1'];
       const maxFont = parseInt(document.getElementById(prefix + 'MaxFont').value, 10) || 80;
@@ -382,8 +382,10 @@
       if (!cfg) return;
       document.getElementById('editName').value = name;
       document.getElementById('editNameDisplay').value = name;
-      document.getElementById('editType').value = cfg.type || 'slide';
-      document.getElementById('editSection').value = cfg.section || 'opinion';
+      const editTypeVal = cfg.type || 'slide';
+      const editSectionVal = cfg.section || 'opinion';
+      document.querySelectorAll('input[name="editType"]').forEach((r) => { r.checked = r.value === editTypeVal; });
+      document.querySelectorAll('input[name="editSection"]').forEach((r) => { r.checked = r.value === editSectionVal; });
       document.getElementById('editStructure').value = Array.isArray(cfg.structure) ? cfg.structure.join(', ') : 'Quote 1';
       document.getElementById('editMaxFont').value = cfg.maxFont ?? 80;
       document.getElementById('editNameFont').value = cfg.nameFont ?? 0;
@@ -430,38 +432,6 @@
       }
     });
 
-    editReplaceThumbBtn.addEventListener('click', () => {
-      const name = document.getElementById('editName').value.trim();
-      if (!name) return;
-      const cfg = currentTemplates[name];
-      const type = cfg && cfg.type ? cfg.type : 'slide';
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/png,.png';
-      input.onchange = async () => {
-        const file = input.files && input.files[0];
-        if (!file) return;
-        const base64 = await fileToBase64(file);
-        const url = `/api/thumbnails/${type}/${encodeURIComponent(name)}`;
-        const r = await fetch(url, {
-          method: 'PUT',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: base64 }),
-        });
-        if (r.ok) {
-          const img = document.querySelector(`.thumb-item[data-name="${escapeHtml(name)}"] img`);
-          if (img) img.src = url + '?t=' + Date.now();
-          showMsg(editFormMsg, 'Thumbnail updated.', false);
-          setTimeout(() => hideMsg(editFormMsg), 2000);
-        } else {
-          const err = (await r.json().catch(() => ({}))).error || 'Upload failed';
-          showMsg(editFormMsg, err, true);
-        }
-      };
-      input.click();
-    });
-
     function renderThumbLists(templates) {
       const covers = [];
       const slides = [];
@@ -478,9 +448,6 @@
         el.querySelector('img').addEventListener('click', () => openEditModal(name));
         el.querySelector('.name').addEventListener('click', () => openEditModal(name));
       });
-      coverThumbList.querySelectorAll('button[data-action="replace"]').forEach((btn) => {
-        btn.addEventListener('click', (e) => { e.stopPropagation(); replaceThumb('cover', btn.dataset.name); });
-      });
       coverThumbList.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
         btn.addEventListener('click', (e) => { e.stopPropagation(); deleteThumb('cover', btn.dataset.name); });
       });
@@ -491,9 +458,6 @@
         const name = el.dataset.name;
         el.querySelector('img').addEventListener('click', () => openEditModal(name));
         el.querySelector('.name').addEventListener('click', () => openEditModal(name));
-      });
-      slideThumbList.querySelectorAll('button[data-action="replace"]').forEach((btn) => {
-        btn.addEventListener('click', (e) => { e.stopPropagation(); replaceThumb('slide', btn.dataset.name); });
       });
       slideThumbList.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
         btn.addEventListener('click', (e) => { e.stopPropagation(); deleteThumb('slide', btn.dataset.name); });
@@ -511,7 +475,6 @@
           <div class="name" title="Click to edit">${escapeHtml(name)}</div>
           <div class="actions">
             <button type="button" data-action="edit" data-name="${escapeHtml(name)}">Edit</button>
-            <button type="button" data-action="replace" data-name="${escapeHtml(name)}">Replace</button>
             <button type="button" data-action="delete" data-name="${escapeHtml(name)}" class="danger">Delete</button>
           </div>
         </div>
@@ -523,31 +486,6 @@
       return div.innerHTML;
     }
 
-    function replaceThumb(type, name) {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/png,.png';
-      input.onchange = async () => {
-        const file = input.files && input.files[0];
-        if (!file) return;
-        const base64 = await fileToBase64(file);
-        const url = `/api/thumbnails/${type}/${encodeURIComponent(name)}`;
-        const r = await fetch(url, {
-          method: 'PUT',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: base64 }),
-        });
-        if (r.ok) {
-          const img = document.querySelector(`.thumb-item[data-name="${escapeHtml(name)}"] img`);
-          if (img) img.src = url + '?t=' + Date.now();
-        } else {
-          const err = (await r.json().catch(() => ({}))).error || 'Upload failed';
-          alert(err);
-        }
-      };
-      input.click();
-    }
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const fr = new FileReader();

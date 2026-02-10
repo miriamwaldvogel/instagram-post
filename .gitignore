@@ -1,8 +1,6 @@
 cover-thumbnails/originals/
-
-cover-thumbnails/originals/
+cover-thumbnails/
 slide-thumbnails/originals/
-cover-thumbnails/originals/
-cover-thumbnails/originals/
+slide-thumbnails/
 .vercel
 .env*.local
