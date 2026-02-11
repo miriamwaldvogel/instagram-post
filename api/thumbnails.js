@@ -1,4 +1,4 @@
-import { list, put, del } from '@vercel/blob';
+import { head, put, del } from '@vercel/blob';
 import { isAdmin } from './_lib/auth.js';
 
 const PREFIXES = { cover: 'cover-thumbnails/', slide: 'slide-thumbnails/' };
@@ -32,14 +32,15 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const { blobs } = await list({ prefix: pathname, limit: 1 });
-      const blob = blobs?.find((b) => b.pathname === pathname);
-      if (!blob?.url) return err(res, 'Not found', 404);
+      const blob = await head(pathname);
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Cache-Control', 'public, max-age=86400');
       return res.redirect(302, blob.url);
     } catch (e) {
       console.error('thumbnails GET:', e);
+      if (e.message?.includes('not found') || e.message?.includes('BlobNotFoundError')) {
+        return err(res, 'Not found', 404);
+      }
       return err(res, 'Storage error', 503);
     }
   }
@@ -83,13 +84,19 @@ export default async function handler(req, res) {
   if (req.method === 'DELETE') {
     if (!isAdmin(req)) return err(res, 'Unauthorized', 401);
     try {
-      const { blobs } = await list({ prefix: pathname, limit: 1 });
-      const blob = blobs?.find((b) => b.pathname === pathname);
+      // head() is a basic operation (free), then del() uses the URL
+      const blob = await head(pathname);
       if (blob?.url) await del(blob.url);
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Content-Type', 'application/json');
       return res.status(200).end(JSON.stringify({ ok: true }));
     } catch (e) {
+      // If blob doesn't exist, deletion is a no-op (success)
+      if (e.message?.includes('not found') || e.message?.includes('BlobNotFoundError')) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(200).end(JSON.stringify({ ok: true }));
+      }
       console.error('thumbnails DELETE:', e);
       return err(res, 'Storage error', 503);
     }

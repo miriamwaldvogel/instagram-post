@@ -1,4 +1,4 @@
-import { list, put } from '@vercel/blob';
+import { head, put } from '@vercel/blob';
 import { isAdmin } from './_lib/auth.js';
 
 const TEMPLATES_PATH = 'templates.json';
@@ -22,11 +22,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const { blobs } = await list({ prefix: TEMPLATES_PATH, limit: 1 });
-      const blob = blobs?.find((b) => b.pathname === TEMPLATES_PATH);
-      if (!blob?.url) {
-        return json(res, {}, 200);
-      }
+      const blob = await head(TEMPLATES_PATH);
       const r = await fetch(blob.url);
       if (!r.ok) return err(res, 'Failed to load templates', 502);
       const body = await r.text();
@@ -40,6 +36,11 @@ export default async function handler(req, res) {
       return res.status(200).setHeader('Content-Type', 'application/json').end(JSON.stringify(data));
     } catch (e) {
       console.error('templates GET:', e);
+      // If blob doesn't exist, return empty object
+      if (e.message?.includes('not found') || e.message?.includes('BlobNotFoundError')) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        return json(res, {}, 200);
+      }
       return err(res, 'Storage error', 503);
     }
   }
